@@ -13,7 +13,7 @@ const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.l
 
 // view engine setup
 app.set('views', path.join(__dirname, 'src/views'));
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 
 app.use(logger('common', {stream: accessLogStream}));
 app.use(express.json());

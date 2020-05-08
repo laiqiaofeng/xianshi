@@ -1,4 +1,4 @@
-import request from 'request';
+import Https from 'https';
 import iconv from 'iconv-lite';
 import cheerio from 'cheerio';
 import { Promise } from 'mongoose';
@@ -14,20 +14,27 @@ function getCsdnData(api: string = '', params: Record<string, any> = {}) {
     return new Promise((resolve : Function, reject: Function) => {
         // type=more&category=home&shown_offset=0
         console.log(`${csdngUrl}${api}?type=${params.type}&category=${params.category}&shown_offset=0`);
-        request({
-            url: `${csdngUrl}${api}?type=${params.type}&category=${params.category}&shown_offset=0`,
+        Https.get(
+            `${csdngUrl}${api}?type=${params.type}&category=${params.category}&shown_offset=0`,
+            {
             method: 'GET',
-            encoding: null,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
                 'server': 'openresty'
             }
-        }, (err, res, body) => {
-            if( err ) {
-                reject(err);
-            } else {
-                resolve({res, body});
-            }
+        }, (res) => {
+            const datas : any[]= [];
+            res.on('data', (data) => {
+                datas.push(data);
+            } );
+            res.on('end', () => {
+                console.log(datas.length);
+                let data = '';
+                datas.forEach((item, index) => {
+                    data += item.toString();
+                })
+                resolve({res, data: data});
+            })
         });
     })
 }
@@ -38,9 +45,9 @@ const parsePage = function (api: string = '',callback :Function, isUtf8: boolean
         // 如果网站是GBK的话通过iconv转译
         let parseData;
         if (!isUtf8) {
-            parseData = iconv.decode(urlData.body, 'gbk')
+            parseData = iconv.decode(urlData.data, 'gbk')
         }else {
-            parseData = urlData.body;
+            parseData = urlData.data;
         }
         const querySelector = cheerio.load(parseData);
         return callback(querySelector, parseData, urlData);
@@ -50,15 +57,15 @@ const parsePage = function (api: string = '',callback :Function, isUtf8: boolean
 const parseApi = function (api: string = '',callback :Function, params: Record<string ,any> = {}) {
     return getCsdnData(api, params).then((urlData: any) => {
         // const data = Buffer.alloc(urlData.body);
-        return callback(JSON.parse(urlData.body));
+        // console.log('user',urlData.data);
+        return callback(JSON.parse(urlData.data));
     }).catch((e: Error) => console.log(e.message))
 }
 
 
 function getCsdnArticles (api : string = '', params: Record<string, any>) {
-    console.log(params)
     return parseApi(api, ( data : any) => {
-        if (data.status) {
+        if (data.status === 'true') {
             return data.articles
         } else {
             return data.message
@@ -77,6 +84,7 @@ function getCsdnSwiper () {
             obj.imgUrl = $(this).find('img')[0].attribs.src;
             list.push(obj);
         })
+        // console.log(list)
         return list;
     })
 }
@@ -84,21 +92,28 @@ function getCsdnSwiper () {
 function getSoHotWord () {
     const api = 'https://redisdatarecall.csdn.net/recommend/soHotWord';
     return new Promise((resolve: Function, reject: Function) => {
-        request({
-            url: api,
+        Https.get(
+            api,
+            {
             method: 'GET',
-            encoding: null,
+            // encoding: null,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
                 'server': 'openresty'
             }
-        }, (err, res, body) => {
-            if( err ) {
-                reject(err);
-            } else {
-                const json = JSON.parse(body);
-                resolve(json.data);
-            }
+        }, (res) => {
+                const datas : any[]= [];
+                res.on('data', (data) => {
+                    datas.push(data);
+                } );
+                res.on('end', () => {
+                    console.log(datas.length);
+                    let data = '';
+                    datas.forEach((item, index) => {
+                        data += item.toString();
+                    })
+                    resolve({res, data: data});
+                })
         });
     })
 }
