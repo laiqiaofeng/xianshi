@@ -55,12 +55,11 @@ router.get('/updatePassword', (req, res) => {
  * 注册用户
  */
 router.post('/register', function (req, res) {
-  console.log('register');
-  userControl.addUser(req.body,).then(() => {
+  userControl.addUser(req.body,).then((data) => {
     baseSend({
       res,
       req,
-      data: '成功'
+      data: data
     });
   }, (err:Error) => {
     baseSend({
