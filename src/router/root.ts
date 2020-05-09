@@ -35,7 +35,7 @@ router.post('/upLoad', function async (req, res)  {
       const type : string = fields['type'][0];
       const originUrl = req.headers.host
       const publicUrl : string = files.file[0]!.path;
-      const imgUrl : string = url.resolve(`http://${originUrl}`, publicUrl.replace(/public\\/g, '') )
+      const imgUrl : string = url.resolve(`http://${originUrl}`, publicUrl.replace(/public/g, '') )
       const id : string = fields['id'][0];
       if (err) {
         console.log('失败')
